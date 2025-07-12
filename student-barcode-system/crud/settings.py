@@ -1,5 +1,4 @@
 import os
-import dj_database_url
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'
@@ -58,9 +57,10 @@ WSGI_APPLICATION = "crud.wsgi.application"
 
 # Database
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('postgresql://admin:1YlvQZbxRNFMKU6l6R30M0XPkrVtgQsF@dpg-d1p61vripnbc73fmlq90-a/student_db_i7ae')
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / "db.sqlite3",
+    }
 }
 
 # Password validation
