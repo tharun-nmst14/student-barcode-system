@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-4">
+
+<div class="d-flex justify-content-between mb-4">
+    <h1>Student List</h1>
+    <div>
+        <span class="me-2">Welcome, {{ user.username }}</span>
+<form action="{% url 'logout' %}" method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+</form>
+    </div>
+</div>
+
+     
+
+    <a href="{% url 'add_student' %}" class="btn btn-primary mb-3">+ Add New Student</a>
+
+    {% if students %}
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Roll Number</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Actions</th>
+                <th>Bar Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.name }}</td>
+                <td>{{ student.roll_number }}</td>
+                <td>{{ student.email }}</td>
+                <td>{{ student.department }}</td>
+                <td>
+                    <a href="{% url 'edit_student' student.id %}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'delete_student' student.id %}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+                <td>
+    {% if student.barcode_image %}
+        <img src="{{ student.barcode_image.url }}" alt="Barcode" height="100" width='200'>
+    {% else %}
+        No Barcode
+    {% endif %}
+</td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="alert alert-info">No students found.</div>
+    {% endif %}
+</body>
+</html>
+
+
+<!-- 📷 Scanner Modal -->
+<button class="btn btn-info mb-3" onclick="openScanner()">📷 Scan Barcode</button>
+
+<div id="scannerModal" style="display:none; position: relative;">
+    <video id="video" width="400" height="300" style="border:1px solid gray;"></video>
+    <canvas id="overlay" width="400" height="300" 
+            style="position: absolute; top: 0; left: 0;"></canvas>
+    
+    <button onclick="stopScanner()" class="btn btn-danger mt-2">Stop Scanner</button>
+    <div id="scannedResult" class="mt-3"></div>
+</div>
+
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<script>
+    let selectedDeviceId;
+    const codeReader = new ZXing.BrowserBarcodeReader();
+    const videoElement = document.getElementById('video');
+    const canvas = document.getElementById('overlay');
+    const ctx = canvas.getContext('2d');
+
+    async function openScanner() {
+        document.getElementById("scannerModal").style.display = "block";
+        const devices = await codeReader.getVideoInputDevices();
+        selectedDeviceId = devices[0].deviceId;
+
+        codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement, (result, err, controls) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (result) {
+                const roll_number = result.text;
+
+                // ✅ Optional green box overlay (static)
+                ctx.strokeStyle = 'lime';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(50, 50, 300, 200);
+
+                // ✅ Stop scanning and redirect
+                stopScanner();
+                window.location.href = `/profile/${roll_number}/`;
+            }
+
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+                console.error('Scan error:', err);
+            }
+        });
+    }
+
+    function stopScanner() {
+        codeReader.reset();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById("scannerModal").style.display = "none";
+    }
+</script>
